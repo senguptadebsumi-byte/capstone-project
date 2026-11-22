@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AegisTrace v3.0 — Security Log &amp; Alert Triage Workbench | Codomax Capstone</title>
+  
+  <!-- Web Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Top Tactical Header & HUD Bar -->
+  <header class="top-header">
+    <div class="brand-wrapper">
+      <div class="brand-logo">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          <path d="M9 12l2 2 4-4"/>
+        </svg>
+      </div>
+      <div class="brand-info">
+        <h1>Aegis<span class="highlight">Trace</span> <span class="badge-version">v3.0-PRO</span></h1>
+        <p class="brand-subtitle">
+          <span>Security Log Analyzer &amp; Incident Triage Workbench</span>
+          <span style="opacity: 0.5;">&bull;</span>
+          <span style="color: var(--neon-cyan);">Vercel Production Edge</span>
+        </p>
+      </div>
+    </div>
+
+    <!-- Header HUD Elements -->
+    <div class="header-hud">
+      <!-- Live DEFCON Threat Index Status -->
+      <div id="threat-level-badge" class="threat-level-badge" title="Automated Real-Time Threat Posture">
+        <span style="color: #00e676;">🛡️</span> DEFCON 5 &bull; NOMINAL
+      </div>
+
+      <!-- Live SOC UTC Digital Clock -->
+      <div class="soc-clock" title="Coordinated Universal Time (SOC Baseline)">
+        <span style="color: var(--neon-cyan); font-size: 0.9rem;">⏱️</span>
+        <span id="soc-clock-time">UTC --:--:--</span>
+      </div>
+
+      <!-- Tactical Audio Synthesizer Toggle -->
+      <button id="sound-toggle-btn" class="sound-toggle-btn" title="Toggle Synthesized Tactical Audio Feedback">
+        <span>🔇</span> Sound OFF
+      </button>
+
+      <!-- Intern Profile Credential Badge -->
+      <div class="intern-badge">
+        <span class="intern-name">Ayan Mondal</span>
+        <span class="intern-meta">CDS/INT/2026/26637504 &bull; Module 06</span>
+      </div>
+
+      <!-- Active SOC Monitoring Sensor -->
+      <div class="status-indicator">
+        <span class="pulse-dot"></span>
+        <span>SOC Sensor Active</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="container">
+
+    <!-- Safe Testing & Authorized Usage Disclaimer Banner -->
+    <section class="disclaimer-banner" id="disclaimer-banner">
+      <div class="disclaimer-text">
+        <span style="font-size: 1.15rem;">⚠️</span>
+        <span>
+          <strong>Authorized Academic &amp; Defensive Usage:</strong> AegisTrace executes entirely client-side within this browser sandbox. Log telemetry, regex heuristics, and simulated adversary behaviors are processed locally in volatile memory without external network transmission.
+        </span>
+      </div>
+      <button class="close-disclaimer" id="close-disclaimer-btn" title="Dismiss Banner">&times;</button>
+    </section>
+
+    <!-- Top Key Metrics Cards -->
+    <section class="metrics-grid">
+      <div class="metric-card" id="card-total">
+        <div class="metric-content">
+          <span class="metric-label">Total Events Analyzed</span>
+          <span class="metric-value" id="metric-total">0</span>
+        </div>
+        <div class="metric-icon">📊</div>
+      </div>
+
+      <div class="metric-card critical" id="card-critical">
+        <div class="metric-content">
+          <span class="metric-label">Critical Incidents</span>
+          <span class="metric-value" id="metric-critical" style="color: var(--sev-critical);">0</span>
+        </div>
+        <div class="metric-icon">🚨</div>
+      </div>
+
+      <div class="metric-card high" id="card-high">
+        <div class="metric-content">
+          <span class="metric-label">High Severity Alerts</span>
+          <span class="metric-value" id="metric-high" style="color: var(--sev-high);">0</span>
+        </div>
+        <div class="metric-icon">⚠️</div>
+      </div>
+
+      <div class="metric-card medium" id="card-medium">
+        <div class="metric-content">
+          <span class="metric-label">Medium Warnings</span>
+          <span class="metric-value" id="metric-medium" style="color: var(--sev-medium);">0</span>
+        </div>
+        <div class="metric-icon">🛡️</div>
+      </div>
+
+      <div class="metric-card iocs" id="card-iocs">
+        <div class="metric-content">
+          <span class="metric-label">Active Adversary IoCs</span>
+          <span class="metric-value" id="metric-iocs" style="color: var(--neon-cyan);">0</span>
+        </div>
+        <div class="metric-icon">🎯</div>
+      </div>
+    </section>
+
+    <!-- Threat Severity Distribution Visual Meter -->
+    <section class="analytics-bar-card">
+      <div class="analytics-bar-header">
+        <span>Incident Severity Ratio &bull; Threat Composition</span>
+        <span style="font-size: 0.7rem; font-family: var(--font-mono); color: var(--text-secondary);">Real-Time Heuristic Ratio</span>
+      </div>
+      <div class="threat-dist-bar" id="threat-dist-bar">
+        <!-- Dynamically injected segments -->
+      </div>
+      <div class="dist-legend">
+        <div class="dist-legend-item">
+          <span class="dist-legend-dot" style="background: var(--sev-critical);"></span>
+          <span>Critical (<strong id="legend-crit-cnt">0</strong>)</span>
+        </div>
+        <div class="dist-legend-item">
+          <span class="dist-legend-dot" style="background: var(--sev-high);"></span>
+          <span>High (<strong id="legend-high-cnt">0</strong>)</span>
+        </div>
+        <div class="dist-legend-item">
+          <span class="dist-legend-dot" style="background: var(--sev-medium);"></span>
+          <span>Medium (<strong id="legend-med-cnt">0</strong>)</span>
+        </div>
+        <div class="dist-legend-item">
+          <span class="dist-legend-dot" style="background: var(--sev-low);"></span>
+          <span>Low (<strong id="legend-low-cnt">0</strong>)</span>
+        </div>
+        <div class="dist-legend-item">
+          <span class="dist-legend-dot" style="background: var(--sev-info);"></span>
+          <span>Info (<strong id="legend-info-cnt">0</strong>)</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Dual-Column Workbench -->
+    <div class="workbench-grid">
+
+      <!-- Left Column: Ingestion & Threat Intelligence Controls -->
+      <aside class="panel">
+        <div class="panel-header">
+          <h2>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Telemetry Ingestion
+          </h2>
+        </div>
+
+        <!-- Preset Attack Scenarios -->
+        <div class="panel-section">
+          <div class="section-title">
+            <span>Preloaded Attack Scenarios</span>
+          </div>
+          <div class="preset-buttons">
+            <button class="btn-preset active" data-preset="mixed">
+              <span>⚡ Mixed Multi-Vector SOC Feed</span>
+              <span class="tag">Simulated</span>
+            </button>
+            <button class="btn-preset" data-preset="auth">
+              <span>🔑 SSH Brute-Force &amp; Root Breach</span>
+              <span class="tag">Auth.log</span>
+            </button>
+            <button class="btn-preset" data-preset="web">
+              <span>🌐 Web Traversal, SQLi &amp; Scans</span>
+              <span class="tag">WAF/Nginx</span>
+            </button>
+            <button class="btn-preset" data-preset="firewall">
+              <span>🛡️ Port Recon &amp; C2 Beaconing</span>
+              <span class="tag">Iptables</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Custom Input & File Drop -->
+        <div class="panel-section">
+          <div class="section-title">
+            <span>Ingest Custom Raw Logs</span>
+          </div>
+          <div class="log-input-area">
+            <textarea id="log-input-box" class="log-textarea" placeholder="Paste syslog, auth.log, Apache/Nginx, or perimeter firewall raw lines here..."></textarea>
+            
+            <div class="upload-dropzone" id="file-dropzone">
+              <p>📁 Drag &amp; drop <strong>.log / .txt / .json</strong> or click to browse</p>
+              <input type="file" id="file-upload-input" accept=".log,.txt,.json,.csv" style="display: none;">
+            </div>
+
+            <div class="action-buttons">
+              <button class="btn btn-primary" id="btn-parse-logs">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+                Analyze Telemetry
+              </button>
+              <button class="btn btn-secondary" id="btn-clear-logs">Clear</button>
+            </div>
+
+            <!-- Live simulation trigger -->
+            <button class="btn btn-simulate" id="btn-simulate-event">
+              ⚡ + Inject Live Attack Event
+            </button>
+          </div>
+        </div>
+
+        <!-- Attacker IoC Summary & Interactive Quarantine -->
+        <div class="panel-section">
+          <div class="section-title">
+            <span>Adversary IoCs &amp; Quarantine</span>
+          </div>
+          <div class="ioc-card-list" id="ioc-summary-list">
+            <!-- Dynamic IoC items -->
+          </div>
+        </div>
+
+        <!-- Framework Standards -->
+        <div class="panel-section" style="margin-bottom: 0;">
+          <div class="section-title">
+            <span>Standards &amp; Taxonomy</span>
+          </div>
+          <p style="font-size: 0.72rem; color: var(--text-secondary); line-height: 1.45;">
+            Correlation aligned with <strong>MITRE ATT&amp;CK Enterprise Framework</strong> (v14.1) and <strong>NIST SP 800-61 Rev. 2</strong> Incident Handling Guidelines.
+          </p>
+        </div>
+      </aside>
+
+      <!-- Right Column: Incident Triage & Event Stream -->
+      <section class="triage-section">
+
+        <!-- Filter & Search Toolbar -->
+        <div class="filter-bar">
+          <div class="search-input-wrapper">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="search-logs-input" placeholder="Search by IP, username, MITRE ID, or threat signature...">
+          </div>
+
+          <div class="filter-group">
+            <button class="filter-chip active" data-filter="ALL">All</button>
+            <button class="filter-chip" data-filter="CRITICAL">Critical</button>
+            <button class="filter-chip" data-filter="HIGH">High</button>
+            <button class="filter-chip" data-filter="MEDIUM">Medium</button>
+            <button class="filter-chip" data-filter="LOW">Low</button>
+            <button class="filter-chip" data-filter="INFO">Info</button>
+          </div>
+
+          <div class="export-group">
+            <button class="btn btn-secondary" onclick="window.exportReport('markdown')" title="Export formatted Markdown triage report">
+              📄 .MD
+            </button>
+            <button class="btn btn-secondary" onclick="window.exportReport('json')" title="Export structured JSON incident data">
+              📦 .JSON
+            </button>
+            <button class="btn btn-secondary" onclick="window.exportReport('csv')" title="Export CSV for spreadsheet review">
+              📊 .CSV
+            </button>
+          </div>
+        </div>
+
+        <!-- Security Event Stream Table -->
+        <div class="table-container">
+          <div class="table-header-meta">
+            <div>
+              <strong style="color: var(--text-bright);">Security Event Stream</strong>
+              <span style="margin: 0 0.4rem;">&bull;</span>
+              <span id="events-count-display">Showing 0 events</span>
+            </div>
+            <div style="font-size: 0.74rem;">
+              <span>Click any record to triage incident &amp; inspect playbooks</span>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="events-table">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Severity</th>
+                  <th>Source IP</th>
+                  <th>Identity</th>
+                  <th>Detected Signature &amp; Category</th>
+                  <th>MITRE ATT&amp;CK</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="events-tbody">
+                <!-- Injected via JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Deep Dive Forensic Investigation Modal -->
+  <div class="modal-overlay" id="event-detail-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>
+          <span id="modal-severity" class="severity-badge critical">CRITICAL</span>
+          <span id="modal-rule-name">Threat Signature Name</span>
+        </h3>
+        <button class="btn-close-modal" onclick="window.closeModal()">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="detail-grid">
+          <div class="detail-item">
+            <div class="label">Event Identifier</div>
+            <div class="val" id="modal-evt-id" style="font-family: var(--font-mono); font-size: 0.75rem;">-</div>
+          </div>
+          <div class="detail-item">
+            <div class="label">Observed Timestamp</div>
+            <div class="val" id="modal-timestamp" style="font-family: var(--font-mono); font-size: 0.8rem;">-</div>
+          </div>
+          <div class="detail-item">
+            <div class="label">Attacker / Source IP</div>
+            <div class="val" id="modal-src-ip" style="font-family: var(--font-mono); color: var(--neon-cyan);">-</div>
+          </div>
+          <div class="detail-item">
+            <div class="label">Targeted User / Identity</div>
+            <div class="val" id="modal-user" style="font-family: var(--font-mono);">-</div>
+          </div>
+          <div class="detail-item">
+            <div class="label">Threat Classification</div>
+            <div class="val" id="modal-category">-</div>
+          </div>
+          <div class="detail-item">
+            <div class="label">MITRE ATT&amp;CK Mapping</div>
+            <div class="val" id="modal-mitre" style="color: #c084fc; font-family: var(--font-mono);">-</div>
+          </div>
+        </div>
+
+        <div>
+          <div class="section-title" style="margin-bottom: 0.35rem;">
+            <span>Raw Normalized Telemetry Line</span>
+          </div>
+          <div class="raw-log-box" id="modal-raw-log"></div>
+        </div>
+
+        <!-- Incident Response Playbook -->
+        <div class="playbook-box">
+          <h4>
+            <span>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="vertical-align: text-bottom; margin-right: 0.35rem;">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10 9 9 9 8 9"/>
+              </svg>
+              Automated SecOps Remediation Playbook (NIST SP 800-61)
+            </span>
+            <span style="font-size: 0.68rem; font-family: var(--font-mono); color: var(--text-secondary);">CONTAINMENT PHASE</span>
+          </h4>
+          <ol id="modal-playbook-steps">
+            <!-- Dynamic steps -->
+          </ol>
+          <div class="playbook-actions">
+            <button class="btn btn-secondary" onclick="window.copyModalCLI()">
+              📋 Copy Containment CLI Command (<span id="modal-cli-cmd" style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--neon-cyan);"></span>)
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <div>
+      <strong>AegisTrace v3.0</strong> &bull; Module 06 Capstone Project &bull; Codomax Digital Solutions Cybersecurity Virtual Internship
+    </div>
+    <div class="footer-links">
+      <span>Architect: <strong>Ayan Mondal</strong> (CDS/INT/2026/26637504)</span>
+      <a href="docs/security-architecture.md" target="_blank">Architecture Spec</a>
+      <a href="docs/testing-and-verification-report.md" target="_blank">Testing Report</a>
+      <a href="docs/demo-walkthrough.md" target="_blank">Demo Walkthrough</a>
+    </div>
+  </footer>
+
+  <!-- Application Script -->
+  <script src="app.js"></script>
+</body>
+</html>
